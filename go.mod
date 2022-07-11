@@ -5,7 +5,8 @@ go 1.19
 require (
 	code.cloudfoundry.org/jsonry v1.1.4
 	github.com/Pallinder/go-randomdata v1.2.0
-	github.com/cloudfoundry/cloud-service-broker v0.11.0
+	github.com/cloudfoundry/cloud-service-broker v0.10.2-0.20220706122625-f956cbfd5d71
+	github.com/hashicorp/terraform-json v0.14.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.20.0
 	golang.org/x/tools v0.1.11-0.20220513221640-090b14e8501f
@@ -106,3 +107,5 @@ require (
 	gorm.io/driver/sqlite v1.3.6 // indirect
 	gorm.io/gorm v1.23.8 // indirect
 )
+
+replace github.com/cloudfoundry/cloud-service-broker => /Users/mcampo/workspace/csb/csb-brokerpak-aws/../cloud-service-broker
