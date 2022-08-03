@@ -12,6 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+provider "csbpg" {
+  host            = var.hostname
+  port            = local.port
+  username        = var.admin_username
+  password        = var.admin_password
+  data_owner_role = "dataowner"
+  database        = var.db_name
+  sslmode         = var.provider_verify_certificate ? "verify-full" : "require"
+}
+
+# This provider is needed just for cleanup of old bindings
 provider "postgresql" {
   host      = var.hostname
   port      = local.port

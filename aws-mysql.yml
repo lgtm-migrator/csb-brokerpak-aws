@@ -79,7 +79,7 @@ provision:
       minimum: 5
   - field_name: subsume
     type: boolean
-    details: Indicates an existing PostgreSQL instnace should be subsumed      
+    details: Indicates an existing instance should be subsumed
   user_inputs:
   - field_name: use_tls
     type: boolean
