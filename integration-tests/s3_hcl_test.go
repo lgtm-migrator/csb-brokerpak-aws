@@ -28,7 +28,7 @@ var _ = Describe("testing with plans", Label("poc"), func() {
 		Expect(mockTerraform.Reset()).To(Succeed())
 	})
 
-	FIt("should provision s3", func() {
+	It("should provision s3", func() {
 		const s3ServiceName = "csb-aws-s3-bucket"
 		_, err := broker.Provision(s3ServiceName, "private", map[string]any{"bucket_name": "csb-test-bucket"})
 
@@ -50,58 +50,45 @@ var _ = Describe("testing with plans", Label("poc"), func() {
 
 	})
 
-	It("should provision postgres", func() {
+	FIt("should provision postgres", func() {
 		const postgresServiceName = "csb-aws-postgresql"
 
-		tmpFile, _ := ioutil.TempFile("", "test-tf")
-		fmt.Printf("file: %s", tmpFile.Name())
+		vars := []string{`-var=instance_name=`,
+		`-var=cores=2`,
+		`-var=db_name=sometestname`,
+		`-var=labels={"label1"="value1"}`,
+		`-var=storage_gb=5`,
+		`-var=publicly_accessible=false`,
+		`-var=multi_az=false`,
+		`-var=instance_class=blah`,
+		`-var=instance_name=name`,
+		`-var=engine=postgres`,
+		`-var=engine_version=11`,
+		`-var=aws_vpc_id=vpc-0e74b4603f30e4827`,
+		`-var=storage_autoscale=false`,
+		`-var=storage_autoscale_limit_gb=0`,
+		`-var=storage_encrypted=false`,
+		`-var=parameter_group_name=nil`,
+		`-var=rds_subnet_group=nil`,
+		`-var=subsume=false`,
+		`-var=rds_vpc_security_group_ids=`,
+		`-var=allow_major_version_upgrade=false`,
+		`-var=auto_minor_version_upgrade=false`,
+		`-var=maintenance_window=Sun:00:00-Sun:00:00`,
+		`-var=use_tls=false`,
+		`-var=region=us-west-2`,
+		fmt.Sprintf(`-var=aws_access_key_id=%s`, awsAccessKeyID),
+		 fmt.Sprintf(`-var=aws_secret_access_key=%s`, awsSecretAccessKey)}
 
-	vars := []string{`-var=instance_name=`,
-	`-var=cores=2`,
-	`-var=db_name=sometestname`,
-	`-var=labels={"label1"="value1"}`,
-	`-var=storage_gb=5`,
-	`-var=publicly_accessible=false`,
-	`-var=multi_az=false`,
-	`-var=instance_class=blah`,
-	`-var=instance_name=name`,
-	`-var=engine=postgres`,
-	`-var=engine_version=11`,
-	`-var=aws_vpc_id=vpc-047274c3ca4d1c864`,
-	`-var=storage_autoscale=false`,
-	`-var=storage_autoscale_limit_gb=0`,
-	`-var=storage_encrypted=false`,
-	`-var=parameter_group_name=nil`,
-	`-var=rds_subnet_group=nil`,
-	`-var=subsume=false`,
-	`-var=rds_vpc_security_group_ids=`,
-	`-var=allow_major_version_upgrade=false`,
-	`-var=auto_minor_version_upgrade=false`,
-	`-var=maintenance_window=Sun:00:00-Sun:00:00`,
-	`-var=use_tls=false`,
-	`-var=region=us-west-2`,
-	fmt.Sprintf(`-var=aws_access_key_id=%s`, awsAccessKeyID),
-	 fmt.Sprintf(`-var=aws_secret_access_key=%s`, awsSecretAccessKey)}
+		plan := ShowPlan("../terraform/rds/provision",  vars...)
 
-	ShowPlan("../terraform/rds/provision",  vars...)
-
-		//_, err := broker.Provision(postgresServiceName, "small", map[string]any{"instance_name": "csb-test-db"})
-		//
-		//var outputJson tfjson.Plan
-		//
-		//
-		//out, err := mockTerraform.FirstTerraformInvocationPlan()
-		//Expect(err).ToNot(HaveOccurred())
-		//err = json.Unmarshal([]byte(out), &outputJson)
-		//Expect(err).NotTo(HaveOccurred())
-		//
-		//for _, change := range outputJson.ResourceChanges {
-		//	fmt.Printf("Change Resource Name: %s Type:%s Change: %s", change.Name, change.Type, change.Change)
-		//	Expect(change.Type).To(Equal("aws_db_instance"))
-		//	Expect(change.Name).To(Equal("db_instance"))
-		//	Expect(change.Change.Actions).To(ConsistOf(tfjson.Action("create")))
-		//	Expect(change.Change.After).To(MatchAllKeys(Keys{"allocated_storage": Equal("5"), "engine_version": Equal(11), "identifier": Equal("csb-test-db"), "instance_class": Equal("db.t3.medium"), "tags": Not(BeEmpty()), "tags_all": Not(BeEmpty())}))
-		//}
+		for _, change := range plan.ResourceChanges {
+			fmt.Printf("Change Resource Name: %s Type:%s Change: %s", change.Name, change.Type, change.Change)
+			Expect(change.Type).To(Equal("aws_db_instance"))
+			Expect(change.Name).To(Equal("db_instance"))
+			Expect(change.Change.Actions).To(ConsistOf(tfjson.Action("create")))
+			Expect(change.Change.After).To(MatchAllKeys(Keys{"allocated_storage": Equal("5"), "engine_version": Equal(11), "identifier": Equal("csb-test-db"), "instance_class": Equal("db.t3.medium"), "tags": Not(BeEmpty()), "tags_all": Not(BeEmpty())}))
+		}
 
 	})
 
@@ -116,7 +103,7 @@ var _ = Describe("testing with plans", Label("poc"), func() {
 // pros: simples
 //
 //
-func ShowPlan(dir string, args ...string) *gexec.Session {
+func ShowPlan(dir string, args ...string) tfjson.Plan {
 	fmt.Fprintf(GinkgoWriter, "Running: tf plan %s\n", strings.Join(args, " "))
 
 	command := exec.Command("terraform", "-chdir=" + dir, "init")
@@ -134,6 +121,10 @@ func ShowPlan(dir string, args ...string) *gexec.Session {
 	session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 	Eventually(session, 5*time.Minute).Should(gexec.Exit(0))
-	return session
+	var outputJson tfjson.Plan
+	jsonPlan, _ := ioutil.ReadAll(tmpFile)
+
+	json.Unmarshal(jsonPlan, &outputJson)
+	return outputJson
 }
 
