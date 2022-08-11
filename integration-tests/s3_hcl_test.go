@@ -87,8 +87,18 @@ var _ = Describe("testing with plans", Label("poc"), func() {
 			Expect(change.Type).To(Equal("aws_db_instance"))
 			Expect(change.Name).To(Equal("db_instance"))
 			Expect(change.Change.Actions).To(ConsistOf(tfjson.Action("create")))
-			Expect(change.Change.After).To(MatchAllKeys(Keys{"allocated_storage": Equal("5"), "engine_version": Equal(11), "identifier": Equal("csb-test-db"), "instance_class": Equal("db.t3.medium"), "tags": Not(BeEmpty()), "tags_all": Not(BeEmpty())}))
+			Expect(change.Change.After).To(MatchAllKeys(
+				Keys{"allocated_storage": Equal("5"),
+					"engine_version": Equal(11),
+					"identifier": Equal("csb-test-db"),
+					"instance_class": Equal("db.t3.medium"),
+					"tags": Not(BeEmpty()),
+					"tags_all": Not(BeEmpty())}))
 		}
+
+		// test postgres versions
+		// test parameter groups
+		// How fast can this run? Separate from integration tests. If it is not fast outside the broker then it is never going to be fast.
 
 	})
 
