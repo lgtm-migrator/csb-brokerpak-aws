@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestIntegrationTests(t *testing.T) {
+func TestTerraformTests(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "TerraformTests Suite")
 }
