@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("S3", Label("s3"), func() {
+var _ = FDescribe("S3", Label("s3"), func() {
 	It("can be accessed by an app", func() {
 		By("creating a service instance")
 		serviceInstance := services.CreateInstance("csb-aws-s3-bucket", services.WithPlan("default"))

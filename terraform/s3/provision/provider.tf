@@ -18,6 +18,15 @@ variable "region" { type = string }
 
 provider "aws" {
   region     = var.region
-  access_key = var.aws_access_key_id
-  secret_key = var.aws_secret_access_key
+  access_key = "mock-key"
+  secret_key = "mock-secret"
+
+  s3_force_path_style         = true
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+
+  endpoints {
+    s3             = "http://s3.localhost.localstack.cloud:4566"
+  }
 }
