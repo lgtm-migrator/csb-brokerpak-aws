@@ -20,37 +20,6 @@ var tfBinary = "terraform"
 
 var _ = Describe("testing with plans", Label("poc"), func() {
 
-
-	//BeforeEach(func() {
-	//	Expect(mockTerraform.SetTFState([]testframework.TFStateValue{})).To(Succeed())
-	//})
-
-	//AfterEach(func() {
-	//	Expect(mockTerraform.Reset()).To(Succeed())
-	//})
-	//
-	//It("should provision s3", func() {
-	//	const s3ServiceName = "csb-aws-s3-bucket"
-	//	_, err := broker.Provision(s3ServiceName, "private", map[string]any{"bucket_name": "csb-test-bucket"})
-	//
-	//	var outputJson tfjson.Plan
-	//
-	//
-	//	out, err := mockTerraform.FirstTerraformInvocationPlan()
-	//	Expect(err).ToNot(HaveOccurred())
-	//	err = json.Unmarshal([]byte(out), &outputJson)
-	//	Expect(err).NotTo(HaveOccurred())
-	//
-	//	for _, change := range outputJson.ResourceChanges {
-	//		fmt.Printf("Change Resource Name: %s Type:%s Change: %s", change.Name, change.Type, change.Change)
-	//		Expect(change.Type).To(Equal("aws_s3_bucket"))
-	//		Expect(change.Name).To(Equal("b"))
-	//		Expect(change.Change.Actions).To(ConsistOf(tfjson.Action("create")))
-	//		Expect(change.Change.After).To(MatchAllKeys(Keys{"bucket": Equal("csb-test-bucket"), "bucket_prefix": BeNil(), "force_destroy": BeFalse(), "tags": Not(BeEmpty()), "tags_all": Not(BeEmpty())}))
-	//	}
-	//
-	//})
-
 	BeforeEach(OncePerOrdered, func() {
 		Init("../terraform/postgresql/provision")
 	})
@@ -278,9 +247,7 @@ func Init(dir string, args ...string) {
 	fmt.Fprintf(GinkgoWriter, "Running: tf plan %s\n", strings.Join(args, " "))
 
 	command := exec.Command(tfBinary, "-chdir=" + dir, "init")
-	session, err := localBinaryStart(command)
-	Expect(err).NotTo(HaveOccurred())
-	Eventually(session, 5*time.Minute).Should(gexec.Exit(0))
+	commandStart(command)
 }
 
 func ShowPlan(dir string, args ...string) tfjson.Plan {
@@ -289,47 +256,31 @@ func ShowPlan(dir string, args ...string) tfjson.Plan {
 	tmpFile, _ := ioutil.TempFile("", "test-tf")
 	allArgs := []string{"-chdir=" + dir, "plan", "-refresh=false",  fmt.Sprintf("-out=%s", tmpFile.Name())}
 	allArgs = append(allArgs, args...)
-	command := exec.Command("terraform", allArgs...)
-	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-	Eventually(session, 5*time.Minute).Should(gexec.Exit(0))
-	command = exec.Command("terraform", "-chdir=" + dir, "show", "-json", tmpFile.Name())
-	jsonPlan, err := command.Output()
-	Expect(err).NotTo(HaveOccurred())
+	commandStart(exec.Command(tfBinary, allArgs...))
+	command := exec.Command(tfBinary, "-chdir=" + dir, "show", "-json", tmpFile.Name())
+	jsonPlan, err := commandOutput(command)
 	var outputJson tfjson.Plan
 	err = json.Unmarshal(jsonPlan, &outputJson)
 	Expect(err).NotTo(HaveOccurred())
 	return outputJson
 }
 
-func ShowPlan2(dir string, args ...string) tfjson.Plan {
-	fmt.Fprintf(GinkgoWriter, "Running: tf plan %s\n", strings.Join(args, " "))
 
-	tmpFile, _ := ioutil.TempFile("", "test-tf")
-	allArgs := []string{"-chdir=" + dir, "plan", "-refresh=false",  fmt.Sprintf("-out=%s", tmpFile.Name())}
-	allArgs = append(allArgs, args...)
-	command := exec.Command(tfBinary, allArgs...)
-	localBinaryStart(command)
-	command = exec.Command(tfBinary, "-chdir=" + dir, "show", "-json", tmpFile.Name())
-	localBinaryStart(command)
-	var outputJson tfjson.Plan
-	jsonPlan, _ := ioutil.ReadAll(tmpFile)
-
-	json.Unmarshal(jsonPlan, &outputJson)
-	return outputJson
-}
-
-func localBinaryStart(command *exec.Cmd) (*gexec.Session, error) {
+func commandStart(command *exec.Cmd) (*gexec.Session, error) {
 	command.Env = append(os.Environ(),
-		"VIRTUAL_ENV=/Users/mcampo/localstack",
 		"PATH=/Users/mcampo/localstack/bin;" + os.Getenv("PATH"),
 	)
-
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 	Eventually(session, 5*time.Minute).Should(gexec.Exit(0))
 	return session, err
 
+}
+
+func commandOutput(command *exec.Cmd) ([]byte, error) {
+	jsonOutput, err := command.Output()
+	Expect(err).NotTo(HaveOccurred())
+	return jsonOutput, err
 }
 
 func loadJson() {
