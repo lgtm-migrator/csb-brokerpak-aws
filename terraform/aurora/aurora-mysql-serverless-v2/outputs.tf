@@ -12,32 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 output "status" {
-  value = format(
-    "created db %s (id: %s) on server %s URL: https://%s.console.aws.amazon.com/rds/home?region=%s#database:id=%s;is-cluster=false",
-    aws_rds_cluster.default.database_name,
-    aws_rds_cluster.default.id,
-    aws_rds_cluster.default.endpoint,
-    var.region,
-    var.region,
-    aws_rds_cluster.default.id,
-  )
-  sensitive = true
+  value = try(module.wmware_aurora_mysql_serverlessv2.status, "")
+  sensitive = false
 }
 
 output "cluster_arn" {
   description = "Amazon Resource Name (ARN) of cluster"
-  value       = try(aws_rds_cluster.default.arn, "")
+  value       = try(module.wmware_aurora_mysql_serverlessv2.cluster_arn, "")
 }
 
 
 output "cluster_master_password" {
   description = "The database master password"
-  value       = try(aws_rds_cluster.default.master_password, "")
+  value       = try(module.wmware_aurora_mysql_serverlessv2.cluster_master_password, "")
   sensitive   = true
 }
 
 output "cluster_master_username" {
   description = "The database master username"
-  value       = try(aws_rds_cluster.default.master_username, "")
-  sensitive   = true
+  value       = try(module.wmware_aurora_mysql_serverlessv2.cluster_master_username, "")
+  sensitive   = false
+}
+
+output "cluster_instances" {
+  description = "A map of cluster instances"
+  value       = try(module.wmware_aurora_mysql_serverlessv2.cluster_instances, "")
+  sensitive   = false
 }
