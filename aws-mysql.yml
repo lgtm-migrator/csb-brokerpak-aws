@@ -85,10 +85,14 @@ provision:
     type: number
     details: The amount of provisioned IOPS. In order for this property to take effect, `storage_type` must be set to `io1`.
     default: 3000
-  - field_name: use_tls
+  - field_name: require_ssl
     type: boolean
-    details: Use TLS for connection
-    default: true 
+    details: Require that connections use SSL. Note that if "parameter_group_name" is specified then the "require_ssl" parameter will not take effect.
+    default: true
+  - field_name: provider_verify_certificate
+    type: boolean
+    details: Whether MySQL Terraform provider should validate the server certificate. The AWS certificate bundle must be installed.
+    default: true
   - field_name: storage_autoscale
     type: boolean
     default: false
@@ -341,10 +345,6 @@ provision:
     default: mysql
     overwrite: true
     type: string
-  - name: engine_version
-    default: ${mysql_version}
-    overwrite: true
-    type: string
   template_refs:
     outputs: terraform/mysql/provision/outputs.tf
     provider: terraform/mysql/provision/provider.tf
@@ -365,9 +365,12 @@ provision:
   - field_name: password
     type: string
     details: The password to authenticate to the database instance.
-  - field_name: use_tls
+  - field_name: require_ssl
     type: boolean
-    details: Using TLS for connection
+    details: Require that connections use SSL
+  - field_name: provider_verify_certificate
+    type: boolean
+    details: Whether MySQL Terraform provider should validate the server certificate. The AWS certificate bundle must be installed.
 bind:
   plan_inputs: []
   user_inputs: []
@@ -388,9 +391,9 @@ bind:
       type: string
       default: ${instance.details["password"]}
       overwrite: true
-    - name: use_tls
+    - name: provider_verify_certificate
       type: boolean
-      default: ${instance.details["use_tls"]}
+      default: ${instance.details["provider_verify_certificate"]}
       overwrite: true
   template_refs:
     outputs: terraform/mysql/bind/outputs.tf

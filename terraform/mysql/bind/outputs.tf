@@ -31,13 +31,12 @@ output "uri" {
 output "port" { value = local.port }
 output "jdbcUrl" {
   value = format(
-    "jdbc:mysql://%s:%d/%s?user=%s\u0026password=%s\u0026useSSL=%v",
+    "jdbc:mysql://%s:%d/%s?user=%s\u0026password=%s\u0026useSSL=true",
     var.hostname,
     local.port,
     var.db_name,
     random_string.username.result,
     random_password.password.result,
-    var.use_tls,
   )
   sensitive = true
 }

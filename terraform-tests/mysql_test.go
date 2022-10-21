@@ -28,8 +28,7 @@ var _ = Describe("mysql", Label("mysql-terraform"), Ordered, func() {
 		"publicly_accessible":                   false,
 		"multi_az":                              false,
 		"instance_class":                        "an-instance-class",
-		"engine":                                "mysql",
-		"engine_version":                        5.7,
+		"mysql_version":                         "5.7",
 		"aws_vpc_id":                            awsVPCID,
 		"storage_autoscale":                     false,
 		"storage_autoscale_limit_gb":            0,
@@ -45,7 +44,8 @@ var _ = Describe("mysql", Label("mysql-terraform"), Ordered, func() {
 		"maintenance_end_min":                   nil,
 		"maintenance_start_min":                 nil,
 		"maintenance_day":                       nil,
-		"use_tls":                               true,
+		"require_ssl":                           true,
+		"provider_verify_certificate":           true,
 		"deletion_protection":                   false,
 		"backup_retention_period":               7,
 		"backup_window":                         nil,
@@ -75,18 +75,45 @@ var _ = Describe("mysql", Label("mysql-terraform"), Ordered, func() {
 				plan = ShowPlan(terraformProvisionDir, buildVars(defaultVars, map[string]any{}))
 			})
 
-			It("should use the default parameter group", func() {
-				Expect(ResourceCreationForType(plan, "aws_db_parameter_group")).To(BeEmpty())
-
+			It("should create a parameter group", func() {
+				Expect(ResourceCreationForType(plan, "aws_db_parameter_group")).To(HaveLen(1))
 				Expect(AfterValuesForType(plan, "aws_db_instance")).To(
 					MatchKeys(IgnoreExtras, Keys{
-						"parameter_group_name": Equal("default.mysql5.7"),
+						"parameter_group_name": Equal("rds-mysql-csb-mysql-test"),
 					}))
+				Expect(AfterValuesForType(plan, "aws_db_parameter_group")).To(
+					MatchKeys(IgnoreExtras, Keys{
+						"name":   Equal("rds-mysql-csb-mysql-test"),
+						"family": Equal("mysql5.7"),
+						"parameter": ConsistOf(MatchKeys(IgnoreExtras, Keys{
+							"name":  Equal("require_secure_transport"),
+							"value": Equal("1"),
+						})),
+					}),
+				)
 			})
-
 		})
 
-		Context("Parameter group passed", func() {
+		When("not requiring SSL", func() {
+			BeforeAll(func() {
+				plan = ShowPlan(terraformProvisionDir, buildVars(defaultVars, map[string]any{
+					"require_ssl": false,
+				}))
+			})
+
+			It("should configure the parameter in the parameter group", func() {
+				Expect(AfterValuesForType(plan, "aws_db_parameter_group")).To(
+					MatchKeys(IgnoreExtras, Keys{
+						"parameter": ConsistOf(MatchKeys(IgnoreExtras, Keys{
+							"name":  Equal("require_secure_transport"),
+							"value": Equal("0"),
+						})),
+					}),
+				)
+			})
+		})
+
+		Context("parameter group passed", func() {
 			BeforeAll(func() {
 				plan = ShowPlan(terraformProvisionDir, buildVars(defaultVars, map[string]any{
 					"parameter_group_name": "some-parameter-group-name",

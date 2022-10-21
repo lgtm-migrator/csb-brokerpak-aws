@@ -41,5 +41,10 @@ var _ = Describe("MySQL", Label("mysql"), func() {
 		By("getting the value using the second app")
 		got := appTwo.GET(key)
 		Expect(got).To(Equal(value))
+
+		By("setting a key-value using an insecure connection")
+		key2 := random.Hexadecimal()
+		value2 := random.Hexadecimal()
+		appOne.PUT(value2, "%s?tls=false", key2)
 	})
 })

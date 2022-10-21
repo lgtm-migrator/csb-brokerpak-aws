@@ -29,14 +29,19 @@ locals {
     64 = "db.m5.16xlarge"
   }
 
-  port = 3306
+  engine                 = "mysql"
+  split_version          = split(".", var.mysql_version)
+  major_version          = local.split_version[0]
+  default_minor_version  = local.major_version == "5" ? "7" : "0"
+  minor_version          = length(local.split_version) > 1 ? local.split_version[1] : local.default_minor_version
+  port                   = 3306
+  parameter_group_family = format("%s%s", local.engine, local.major_version == "5" ? "5.7" : "8.0")
 
   instance_class = length(var.instance_class) == 0 ? local.instance_types[var.cores] : var.instance_class
 
   subnet_group = length(var.rds_subnet_group) > 0 ? var.rds_subnet_group : aws_db_subnet_group.rds-private-subnet[0].name
 
-  parameter_group_name = length(var.parameter_group_name) == 0 ? format("default.%s%s", var.engine, var.engine_version) : var.parameter_group_name
-  log_groups           = var.enable_audit_logging == true ? { "audit" : true } : {}
+  log_groups = var.enable_audit_logging == true ? { "audit" : true } : {}
 
   max_allocated_storage = (var.storage_autoscale && var.storage_autoscale_limit_gb > var.storage_gb) ? var.storage_autoscale_limit_gb : null
 

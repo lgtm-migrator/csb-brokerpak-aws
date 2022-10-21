@@ -327,10 +327,6 @@ bind:
     type: string
     default: ${instance.details["password"]}
     overwrite: true
-  - name: require_ssl
-    type: boolean
-    default: ${instance.details["require_ssl"]}
-    overwrite: true
   - name: provider_verify_certificate
     type: boolean
     default: ${instance.details["provider_verify_certificate"]}
