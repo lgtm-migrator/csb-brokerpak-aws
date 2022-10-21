@@ -12,7 +12,7 @@ import (
 
 func (s *ServiceInstance) Upgrade() {
 	if !s.UpgradeAvailable() {
-		fmt.Printf("no upgrade available for service instance\n")
+		fmt.Println("no upgrade available for service instance")
 		return
 	}
 

@@ -41,6 +41,7 @@ resource "aws_rds_cluster" "cluster" {
   db_subnet_group_name   = aws_db_subnet_group.rds_private_subnet.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot    = true
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.cluster_parameter_group.name
 
   dynamic "serverlessv2_scaling_configuration" {
     for_each = local.serverless ? [null] : []
@@ -66,5 +67,18 @@ resource "aws_rds_cluster_instance" "cluster_instances" {
 
   lifecycle {
     prevent_destroy = true
+  }
+}
+
+resource "aws_rds_cluster_parameter_group" "cluster_parameter_group" {
+  name   = format("rds-apg-%s", var.instance_name)
+  family = format("%s%s",
+    aws_rds_cluster.cluster.engine,
+    aws_rds_cluster.cluster.engine_version_actual,
+  )
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = var.require_ssl ? 1 : 0
   }
 }

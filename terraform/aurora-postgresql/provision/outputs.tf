@@ -7,6 +7,8 @@ output "password" {
   value     = aws_rds_cluster.cluster.master_password
   sensitive = true
 }
+output "require_ssl" { value = var.require_ssl }
+output "provider_verify_certificate" { value = var.provider_verify_certificate }
 output "status" {
   value = format(
     "created db %s (id: %s) on server %s",

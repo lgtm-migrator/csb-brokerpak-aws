@@ -7,3 +7,5 @@ variable "cluster_instances" { type = number }
 variable "serverless_min_capacity" { type = number }
 variable "serverless_max_capacity" { type = number }
 variable "engine_version" { type = string }
+variable "require_ssl" { type = bool }
+variable "provider_verify_certificate" { type = bool }
